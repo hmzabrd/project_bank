@@ -76,6 +76,8 @@ void menu_principale();
 void Gestion_des_clients();
 void Gestion_des_comptes();
 void Gestion_des_operation();
+void menu_admin();
+int authentifier_admin();
 
 // Utilitaires generaux
 void clear_buffer();
@@ -131,6 +133,15 @@ void sauvegarder_donnees();
 void charger_donnees();
 void exporter_tout_txt();
 void ensure_directories();
+
+// Admin functions
+void afficher_statistiques();
+void afficher_tous_clients_detaille();
+void afficher_tous_comptes_detaille();
+void afficher_toutes_transactions_detaille();
+void afficher_client_complet(int id_client);
+void afficher_compte_complet(int id_compte);
+void informations_systeme();
 
 // Lancement global de l'application
 void run_application();
@@ -1050,6 +1061,332 @@ void charger_donnees() {
     }
 }
 
+/* ========== ADMIN FUNCTIONS ========== */
+
+int authentifier_admin() {
+    char code[100];
+    printf("\n=======================================\n");
+    printf("||      ACCES ADMINISTRATEUR          ||\n");
+    printf("=======================================\n");
+    printf("Entrez le code d'acces admin: ");
+    
+    if (fgets(code, sizeof(code), stdin) != NULL) {
+        code[strcspn(code, "\n")] = 0; /* Supprimer le saut de ligne */
+        
+        if (strcmp(code, "benmsik_bank_admin_access") == 0) {
+            printf("\n [OK] Acces autorise\n");
+            pause_screen();
+            return 1;
+        } else {
+            printf("\n [ERREUR] Code d'acces invalide\n");
+            return 0;
+        }
+    }
+    return 0;
+}
+
+void informations_systeme() {
+    printf("\n=======================================\n");
+    printf("||      INFORMATIONS SYSTEME          ||\n");
+    printf("=======================================\n");
+    printf("Nombre total de clients: %d\n", nb_clients);
+    printf("Nombre total de comptes: %d\n", nb_comptes);
+    printf("Nombre total de transactions: %d\n", nb_transactions);
+    printf("Prochain ID transaction: %d\n", next_transaction_id);
+    
+    /* Calculer le solde total */
+    float solde_total = 0;
+    for (int i = 0; i < nb_comptes; i++) {
+        solde_total += comptes[i].solde;
+    }
+    printf("Solde total de tous les comptes: %.2f DH\n", solde_total);
+    
+    printf("\nFichiers de donnees:\n");
+    printf("- database/clients.dat\n");
+    printf("- database/comptes.dat\n");
+    printf("- database/transactions.dat\n");
+    printf("- database/backdoor acces/*.txt\n");
+    
+    pause_screen();
+}
+
+void afficher_statistiques() {
+    printf("\n=======================================\n");
+    printf("||         STATISTIQUES              ||\n");
+    printf("=======================================\n");
+    
+    printf("\n--- CLIENTS ---\n");
+    printf("Total: %d clients\n", nb_clients);
+    
+    /* Clients avec comptes */
+    int clients_avec_comptes = 0;
+    for (int i = 0; i < nb_clients; i++) {
+        if (compter_comptes_client(clients[i].id_client) > 0) {
+            clients_avec_comptes++;
+        }
+    }
+    printf("Clients avec comptes: %d\n", clients_avec_comptes);
+    printf("Clients sans comptes: %d\n", nb_clients - clients_avec_comptes);
+    
+    printf("\n--- COMPTES ---\n");
+    printf("Total: %d comptes\n", nb_comptes);
+    
+    /* Calculer statistiques des comptes */
+    float solde_total = 0, solde_min = 0, solde_max = 0;
+    if (nb_comptes > 0) {
+        solde_min = comptes[0].solde;
+        solde_max = comptes[0].solde;
+        for (int i = 0; i < nb_comptes; i++) {
+            solde_total += comptes[i].solde;
+            if (comptes[i].solde < solde_min) solde_min = comptes[i].solde;
+            if (comptes[i].solde > solde_max) solde_max = comptes[i].solde;
+        }
+        printf("Solde total: %.2f DH\n", solde_total);
+        printf("Solde moyen: %.2f DH\n", solde_total / nb_comptes);
+        printf("Solde minimum: %.2f DH\n", solde_min);
+        printf("Solde maximum: %.2f DH\n", solde_max);
+    }
+    
+    printf("\n--- TRANSACTIONS ---\n");
+    printf("Total: %d transactions\n", nb_transactions);
+    
+    /* Statistiques par type */
+    int versements = 0, retraits = 0, virements = 0;
+    float montant_versements = 0, montant_retraits = 0, montant_virements = 0;
+    
+    for (int i = 0; i < nb_transactions; i++) {
+        if (strcmp(transactions[i].type, "Versement") == 0) {
+            versements++;
+            montant_versements += transactions[i].montant;
+        } else if (strcmp(transactions[i].type, "Retrait") == 0) {
+            retraits++;
+            montant_retraits += transactions[i].montant;
+        } else if (strcmp(transactions[i].type, "Virement") == 0) {
+            virements++;
+            montant_virements += transactions[i].montant;
+        }
+    }
+    
+    printf("Versements: %d (Total: %.2f DH)\n", versements, montant_versements);
+    printf("Retraits: %d (Total: %.2f DH)\n", retraits, montant_retraits);
+    printf("Virements: %d (Total: %.2f DH)\n", virements, montant_virements);
+    
+    printf("\n=======================================\n");
+    pause_screen();
+}
+
+void afficher_tous_clients_detaille() {
+    printf("\n=======================================\n");
+    printf("||    TOUS LES CLIENTS (DETAILLE)     ||\n");
+    printf("=======================================\n");
+    
+    if (nb_clients == 0) {
+        printf("\n Aucun client enregistre\n");
+        pause_screen();
+        return;
+    }
+    
+    for (int i = 0; i < nb_clients; i++) {
+        printf("\n--- Client #%d ---\n", i + 1);
+        printf("ID Client: %d\n", clients[i].id_client);
+        printf("Nom: %s\n", clients[i].nom);
+        printf("Prenom: %s\n", clients[i].prenom);
+        printf("Profession: %s\n", clients[i].profession);
+        printf("Telephone: %s\n", clients[i].num_tel);
+        printf("Nombre de comptes: %d\n", compter_comptes_client(clients[i].id_client));
+        printf("--------------------------------------\n");
+    }
+    
+    pause_screen();
+}
+
+void afficher_tous_comptes_detaille() {
+    printf("\n=======================================\n");
+    printf("||    TOUS LES COMPTES (DETAILLE)     ||\n");
+    printf("=======================================\n");
+    
+    if (nb_comptes == 0) {
+        printf("\n Aucun compte enregistre\n");
+        pause_screen();
+        return;
+    }
+    
+    for (int i = 0; i < nb_comptes; i++) {
+        int idx_client = chercherClientParId(comptes[i].id_client);
+        printf("\n--- Compte #%d ---\n", i + 1);
+        printf("ID Compte: %d\n", comptes[i].id_compte);
+        printf("Client: %s %s (ID: %d)\n",
+               idx_client != -1 ? clients[idx_client].nom : "Inconnu",
+               idx_client != -1 ? clients[idx_client].prenom : "",
+               comptes[i].id_client);
+        printf("Solde: %.2f DH\n", comptes[i].solde);
+        printf("Date ouverture: %s\n", comptes[i].date_ouverture);
+        printf("PIN: **** (masque)\n");
+        printf("Nombre de transactions: ");
+        
+        /* Compter les transactions pour ce compte */
+        int nb_trans = 0;
+        for (int j = 0; j < nb_transactions; j++) {
+            if (transactions[j].id_compte == comptes[i].id_compte) {
+                nb_trans++;
+            }
+        }
+        printf("%d\n", nb_trans);
+        printf("--------------------------------------\n");
+    }
+    
+    pause_screen();
+}
+
+void afficher_toutes_transactions_detaille() {
+    printf("\n=======================================\n");
+    printf("||  TOUTES LES TRANSACTIONS (DETAILLE) ||\n");
+    printf("=======================================\n");
+    
+    if (nb_transactions == 0) {
+        printf("\n Aucune transaction enregistree\n");
+        pause_screen();
+        return;
+    }
+    
+    for (int i = 0; i < nb_transactions; i++) {
+        printf("\n--- Transaction #%d ---\n", i + 1);
+        afficher_une_transaction(&transactions[i]);
+        printf("\n");
+    }
+    
+    pause_screen();
+}
+
+void afficher_client_complet(int id_client) {
+    int idx = chercherClientParId(id_client);
+    if (idx == -1) {
+        printf("\n [ERREUR] Client introuvable\n");
+        pause_screen();
+        return;
+    }
+    
+    printf("\n=======================================\n");
+    printf("||      FICHE CLIENT COMPLETE         ||\n");
+    printf("=======================================\n");
+    printf("ID Client: %d\n", clients[idx].id_client);
+    printf("Nom: %s\n", clients[idx].nom);
+    printf("Prenom: %s\n", clients[idx].prenom);
+    printf("Profession: %s\n", clients[idx].profession);
+    printf("Telephone: %s\n", clients[idx].num_tel);
+    
+    /* Afficher tous les comptes du client */
+    printf("\n--- COMPTES DU CLIENT ---\n");
+    int nb_comptes_cl = 0;
+    float solde_total = 0;
+    
+    for (int i = 0; i < nb_comptes; i++) {
+        if (comptes[i].id_client == id_client) {
+            nb_comptes_cl++;
+            solde_total += comptes[i].solde;
+            printf("\nCompte #%d:\n", nb_comptes_cl);
+            printf("  ID Compte: %d\n", comptes[i].id_compte);
+            printf("  Solde: %.2f DH\n", comptes[i].solde);
+            printf("  Date ouverture: %s\n", comptes[i].date_ouverture);
+        }
+    }
+    
+    if (nb_comptes_cl == 0) {
+        printf("Aucun compte\n");
+    } else {
+        printf("\nTotal comptes: %d\n", nb_comptes_cl);
+        printf("Solde total: %.2f DH\n", solde_total);
+    }
+    
+    pause_screen();
+}
+
+void afficher_compte_complet(int id_compte) {
+    int idx = chercherCompteParId(id_compte);
+    if (idx == -1) {
+        printf("\n [ERREUR] Compte introuvable\n");
+        pause_screen();
+        return;
+    }
+    
+    int idx_client = chercherClientParId(comptes[idx].id_client);
+    
+    printf("\n=======================================\n");
+    printf("||      FICHE COMPTE COMPLETE         ||\n");
+    printf("=======================================\n");
+    printf("ID Compte: %d\n", comptes[idx].id_compte);
+    printf("Client: %s %s (ID: %d)\n",
+           idx_client != -1 ? clients[idx_client].nom : "Inconnu",
+           idx_client != -1 ? clients[idx_client].prenom : "",
+           comptes[idx].id_client);
+    printf("Solde actuel: %.2f DH\n", comptes[idx].solde);
+    printf("Date ouverture: %s\n", comptes[idx].date_ouverture);
+    printf("PIN: %s (ADMIN - affichage autorise)\n", comptes[idx].pin);
+    
+    /* Afficher toutes les transactions */
+    printf("\n--- HISTORIQUE COMPLET ---\n");
+    int found = 0;
+    for (int i = 0; i < nb_transactions; i++) {
+        if (transactions[i].id_compte == id_compte) {
+            found = 1;
+            afficher_une_transaction(&transactions[i]);
+            printf("\n");
+        }
+    }
+    
+    if (!found) {
+        printf("Aucune transaction\n");
+    }
+    
+    pause_screen();
+}
+
+void menu_admin() {
+    int choix;
+    do {
+        printf("\n");
+        printf("=======================================\n");
+        printf("||      MENU ADMINISTRATEUR          ||\n");
+        printf("=======================================\n");
+        printf("||  1. Statistiques du systeme      ||\n");
+        printf("||  2. Voir tous les clients        ||\n");
+        printf("||  3. Voir tous les comptes       ||\n");
+        printf("||  4. Voir toutes les transactions ||\n");
+        printf("||  5. Fiche client complete        ||\n");
+        printf("||  6. Fiche compte complete        ||\n");
+        printf("||  7. Informations systeme         ||\n");
+        printf("||  8. Retour au menu principal     ||\n");
+        printf("=======================================\n");
+        printf("Votre choix: ");
+        scanf("%d", &choix);
+        clear_buffer();
+
+        switch(choix) {
+            case 1: afficher_statistiques(); break;
+            case 2: afficher_tous_clients_detaille(); break;
+            case 3: afficher_tous_comptes_detaille(); break;
+            case 4: afficher_toutes_transactions_detaille(); break;
+            case 5: {
+                int id = saisir_int("ID client: ");
+                afficher_client_complet(id);
+                break;
+            }
+            case 6: {
+                int id = saisir_int("ID compte: ");
+                afficher_compte_complet(id);
+                break;
+            }
+            case 7: informations_systeme(); break;
+            case 8:
+                printf("\n Retour au menu principal...\n");
+                break;
+            default:
+                printf("\n [ERREUR] Choix invalide\n");
+                pause_screen();
+        }
+    } while (choix != 8);
+}
+
 /* ========== MENUS ========== */
 
 void Gestion_des_clients() {
@@ -1134,6 +1471,7 @@ void Gestion_des_operation() {
 /* Menu principal : redirige vers les 3 sous-menus ou quitte */
 void menu_principale() {
     int choix;
+    char input[100];
     do {
         printf("\n");
         printf("=======================================\n");
@@ -1147,8 +1485,32 @@ void menu_principale() {
         printf("||  4. Quitter                       ||\n");
         printf("=======================================\n");
         printf("Votre choix: ");
-        scanf("%d", &choix);
-        clear_buffer();
+        
+        /* Lire l'entrée comme chaîne pour détecter le code secret */
+        if (fgets(input, sizeof(input), stdin) != NULL) {
+            /* Supprimer le saut de ligne */
+            input[strcspn(input, "\n")] = 0;
+            
+            /* Vérifier le code secret admin */
+            if (strcmp(input, "#admin_bypass_system") == 0) {
+                if (authentifier_admin()) {
+                    menu_admin();
+                    continue;
+                } else {
+                    pause_screen();
+                    continue;
+                }
+            }
+            
+            /* Essayer de convertir en entier */
+            if (sscanf(input, "%d", &choix) != 1) {
+                printf("\n [ERREUR] Choix invalide\n");
+                pause_screen();
+                continue;
+            }
+        } else {
+            choix = 4; /* Quitter en cas d'erreur */
+        }
 
         switch(choix) {
             case 1: Gestion_des_clients(); break;
