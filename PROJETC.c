@@ -598,53 +598,40 @@ void Nouveau_compte() {
 }
 
 void consultation() {
-    int choix;
+    int id;
     printf("\n--- CONSULTATION ---\n");
-    printf("1. Afficher tous les comptes\n");
-    printf("2. Afficher un compte specifique\n");
-    printf("Votre choix: ");
-    scanf("%d", &choix);
-    clear_buffer();
-
-    if (choix == 1) {
-        if (nb_comptes == 0) {
-            printf("\n Aucun compte enregistre\n");
-            pause_screen();
-            return;
-        }
-        printf("\n======================================\n");
-        printf("         LISTE DES COMPTES\n");
-        printf("======================================\n");
-        for (int i = 0; i < nb_comptes; i++) {
-            int idx = chercherClientParId(comptes[i].id_client);
-            printf("Compte %d | Client: %s %s | %.2f DH | %s\n",
-                   comptes[i].id_compte,
-                   idx != -1 ? clients[idx].nom : "Inconnu",
-                   idx != -1 ? clients[idx].prenom : "",
-                   comptes[i].solde,
-                   comptes[i].date_ouverture);
-        }
-        printf("======================================\n");
-    } else if (choix == 2) {
-        int id = saisir_int("Id compte: ");
-        int i = chercherCompteParId(id);
-        if (i != -1) {
-            int idx = chercherClientParId(comptes[i].id_client);
-            printf("\n [OK] Compte trouve:\n");
-            printf("Compte %d\n", comptes[i].id_compte);
-            printf("Client: %s %s (ID: %d)\n",
-                   idx != -1 ? clients[idx].nom : "Inconnu",
-                   idx != -1 ? clients[idx].prenom : "",
-                   comptes[i].id_client);
-            printf("Solde: %.2f DH\n", comptes[i].solde);
-            printf("Date ouverture: %s\n", comptes[i].date_ouverture);
-            printf("Securite: PIN active (****)\n");
-        } else {
-            printf("\n [ERREUR] Compte introuvable\n");
-        }
-    } else {
-        printf("\n [ERREUR] Choix invalide\n");
+    
+    id = saisir_int("Id compte: ");
+    int i = chercherCompteParId(id);
+    
+    if (i == -1) {
+        printf("\n [ERREUR] Compte introuvable\n");
+        pause_screen();
+        return;
     }
+    
+    /* Verification du PIN obligatoire */
+    printf("\n [SECURITE] Authentification requise\n");
+    if (!verifier_pin(id)) {
+        printf("\n [ERREUR] Acces refuse - PIN incorrect\n");
+        pause_screen();
+        return;
+    }
+    
+    /* Afficher les informations du compte */
+    int idx = chercherClientParId(comptes[i].id_client);
+    printf("\n [OK] Compte trouve:\n");
+    printf("======================================\n");
+    printf("Compte: %d\n", comptes[i].id_compte);
+    printf("Client: %s %s (ID: %d)\n",
+           idx != -1 ? clients[idx].nom : "Inconnu",
+           idx != -1 ? clients[idx].prenom : "",
+           comptes[i].id_client);
+    printf("Solde: %.2f DH\n", comptes[i].solde);
+    printf("Date ouverture: %s\n", comptes[i].date_ouverture);
+    printf("Securite: PIN active (****)\n");
+    printf("======================================\n");
+    
     pause_screen();
 }
 
@@ -880,40 +867,27 @@ void afficher_historique_compte(int id_compte) {
 }
 
 void afficher_historique() {
-    int choix, id;
+    int id;
     printf("\n--- HISTORIQUE DES TRANSACTIONS ---\n");
-    printf("1. Afficher toutes les transactions\n");
-    printf("2. Afficher transactions d'un compte\n");
-    printf("Votre choix: ");
-    scanf("%d", &choix);
-    clear_buffer();
-
-    if (choix == 1) {
-        if (nb_transactions == 0) {
-            printf("\n Aucune transaction enregistree\n");
-            pause_screen();
-            return;
-        }
-
-        printf("\n======================================\n");
-        printf("    HISTORIQUE DE TOUTES LES TRANSACTIONS\n");
-        printf("======================================\n");
-        for (int i = 0; i < nb_transactions; i++) {
-            afficher_une_transaction(&transactions[i]);
-        }
-        printf("\n======================================\n");
-    } else if (choix == 2) {
-        id = saisir_int("Id compte: ");
-        if (chercherCompteParId(id) == -1) {
-            printf("\n [ERREUR] Compte introuvable\n");
-            pause_screen();
-            return;
-        }
-        afficher_historique_compte(id);
-    } else {
-        printf("\n [ERREUR] Choix invalide\n");
+    
+    id = saisir_int("Id compte: ");
+    
+    if (chercherCompteParId(id) == -1) {
+        printf("\n [ERREUR] Compte introuvable\n");
+        pause_screen();
+        return;
     }
-    pause_screen();
+    
+    /* Verification du PIN obligatoire */
+    printf("\n [SECURITE] Authentification requise\n");
+    if (!verifier_pin(id)) {
+        printf("\n [ERREUR] Acces refuse - PIN incorrect\n");
+        pause_screen();
+        return;
+    }
+    
+    /* Afficher l'historique du compte */
+    afficher_historique_compte(id);
 }
 
 /* ========== PERSISTANCE ========== */
@@ -1069,10 +1043,10 @@ int authentifier_admin() {
     printf("||      ACCES ADMINISTRATEUR          ||\n");
     printf("=======================================\n");
     printf("Entrez le code d'acces admin: ");
-    
+
     if (fgets(code, sizeof(code), stdin) != NULL) {
         code[strcspn(code, "\n")] = 0; /* Supprimer le saut de ligne */
-        
+
         if (strcmp(code, "benmsik_bank_admin_access") == 0) {
             printf("\n [OK] Acces autorise\n");
             pause_screen();
@@ -1093,20 +1067,20 @@ void informations_systeme() {
     printf("Nombre total de comptes: %d\n", nb_comptes);
     printf("Nombre total de transactions: %d\n", nb_transactions);
     printf("Prochain ID transaction: %d\n", next_transaction_id);
-    
+
     /* Calculer le solde total */
     float solde_total = 0;
     for (int i = 0; i < nb_comptes; i++) {
         solde_total += comptes[i].solde;
     }
     printf("Solde total de tous les comptes: %.2f DH\n", solde_total);
-    
+
     printf("\nFichiers de donnees:\n");
     printf("- database/clients.dat\n");
     printf("- database/comptes.dat\n");
     printf("- database/transactions.dat\n");
     printf("- database/backdoor acces/*.txt\n");
-    
+
     pause_screen();
 }
 
@@ -1114,10 +1088,10 @@ void afficher_statistiques() {
     printf("\n=======================================\n");
     printf("||         STATISTIQUES              ||\n");
     printf("=======================================\n");
-    
+
     printf("\n--- CLIENTS ---\n");
     printf("Total: %d clients\n", nb_clients);
-    
+
     /* Clients avec comptes */
     int clients_avec_comptes = 0;
     for (int i = 0; i < nb_clients; i++) {
@@ -1127,10 +1101,10 @@ void afficher_statistiques() {
     }
     printf("Clients avec comptes: %d\n", clients_avec_comptes);
     printf("Clients sans comptes: %d\n", nb_clients - clients_avec_comptes);
-    
+
     printf("\n--- COMPTES ---\n");
     printf("Total: %d comptes\n", nb_comptes);
-    
+
     /* Calculer statistiques des comptes */
     float solde_total = 0, solde_min = 0, solde_max = 0;
     if (nb_comptes > 0) {
@@ -1146,14 +1120,14 @@ void afficher_statistiques() {
         printf("Solde minimum: %.2f DH\n", solde_min);
         printf("Solde maximum: %.2f DH\n", solde_max);
     }
-    
+
     printf("\n--- TRANSACTIONS ---\n");
     printf("Total: %d transactions\n", nb_transactions);
-    
+
     /* Statistiques par type */
     int versements = 0, retraits = 0, virements = 0;
     float montant_versements = 0, montant_retraits = 0, montant_virements = 0;
-    
+
     for (int i = 0; i < nb_transactions; i++) {
         if (strcmp(transactions[i].type, "Versement") == 0) {
             versements++;
@@ -1166,11 +1140,11 @@ void afficher_statistiques() {
             montant_virements += transactions[i].montant;
         }
     }
-    
+
     printf("Versements: %d (Total: %.2f DH)\n", versements, montant_versements);
     printf("Retraits: %d (Total: %.2f DH)\n", retraits, montant_retraits);
     printf("Virements: %d (Total: %.2f DH)\n", virements, montant_virements);
-    
+
     printf("\n=======================================\n");
     pause_screen();
 }
@@ -1179,13 +1153,13 @@ void afficher_tous_clients_detaille() {
     printf("\n=======================================\n");
     printf("||    TOUS LES CLIENTS (DETAILLE)     ||\n");
     printf("=======================================\n");
-    
+
     if (nb_clients == 0) {
         printf("\n Aucun client enregistre\n");
         pause_screen();
         return;
     }
-    
+
     for (int i = 0; i < nb_clients; i++) {
         printf("\n--- Client #%d ---\n", i + 1);
         printf("ID Client: %d\n", clients[i].id_client);
@@ -1196,7 +1170,7 @@ void afficher_tous_clients_detaille() {
         printf("Nombre de comptes: %d\n", compter_comptes_client(clients[i].id_client));
         printf("--------------------------------------\n");
     }
-    
+
     pause_screen();
 }
 
@@ -1204,13 +1178,13 @@ void afficher_tous_comptes_detaille() {
     printf("\n=======================================\n");
     printf("||    TOUS LES COMPTES (DETAILLE)     ||\n");
     printf("=======================================\n");
-    
+
     if (nb_comptes == 0) {
         printf("\n Aucun compte enregistre\n");
         pause_screen();
         return;
     }
-    
+
     for (int i = 0; i < nb_comptes; i++) {
         int idx_client = chercherClientParId(comptes[i].id_client);
         printf("\n--- Compte #%d ---\n", i + 1);
@@ -1223,7 +1197,7 @@ void afficher_tous_comptes_detaille() {
         printf("Date ouverture: %s\n", comptes[i].date_ouverture);
         printf("PIN: **** (masque)\n");
         printf("Nombre de transactions: ");
-        
+
         /* Compter les transactions pour ce compte */
         int nb_trans = 0;
         for (int j = 0; j < nb_transactions; j++) {
@@ -1234,7 +1208,7 @@ void afficher_tous_comptes_detaille() {
         printf("%d\n", nb_trans);
         printf("--------------------------------------\n");
     }
-    
+
     pause_screen();
 }
 
@@ -1242,19 +1216,19 @@ void afficher_toutes_transactions_detaille() {
     printf("\n=======================================\n");
     printf("||  TOUTES LES TRANSACTIONS (DETAILLE) ||\n");
     printf("=======================================\n");
-    
+
     if (nb_transactions == 0) {
         printf("\n Aucune transaction enregistree\n");
         pause_screen();
         return;
     }
-    
+
     for (int i = 0; i < nb_transactions; i++) {
         printf("\n--- Transaction #%d ---\n", i + 1);
         afficher_une_transaction(&transactions[i]);
         printf("\n");
     }
-    
+
     pause_screen();
 }
 
@@ -1265,7 +1239,7 @@ void afficher_client_complet(int id_client) {
         pause_screen();
         return;
     }
-    
+
     printf("\n=======================================\n");
     printf("||      FICHE CLIENT COMPLETE         ||\n");
     printf("=======================================\n");
@@ -1274,12 +1248,12 @@ void afficher_client_complet(int id_client) {
     printf("Prenom: %s\n", clients[idx].prenom);
     printf("Profession: %s\n", clients[idx].profession);
     printf("Telephone: %s\n", clients[idx].num_tel);
-    
+
     /* Afficher tous les comptes du client */
     printf("\n--- COMPTES DU CLIENT ---\n");
     int nb_comptes_cl = 0;
     float solde_total = 0;
-    
+
     for (int i = 0; i < nb_comptes; i++) {
         if (comptes[i].id_client == id_client) {
             nb_comptes_cl++;
@@ -1290,14 +1264,14 @@ void afficher_client_complet(int id_client) {
             printf("  Date ouverture: %s\n", comptes[i].date_ouverture);
         }
     }
-    
+
     if (nb_comptes_cl == 0) {
         printf("Aucun compte\n");
     } else {
         printf("\nTotal comptes: %d\n", nb_comptes_cl);
         printf("Solde total: %.2f DH\n", solde_total);
     }
-    
+
     pause_screen();
 }
 
@@ -1308,9 +1282,9 @@ void afficher_compte_complet(int id_compte) {
         pause_screen();
         return;
     }
-    
+
     int idx_client = chercherClientParId(comptes[idx].id_client);
-    
+
     printf("\n=======================================\n");
     printf("||      FICHE COMPTE COMPLETE         ||\n");
     printf("=======================================\n");
@@ -1322,7 +1296,7 @@ void afficher_compte_complet(int id_compte) {
     printf("Solde actuel: %.2f DH\n", comptes[idx].solde);
     printf("Date ouverture: %s\n", comptes[idx].date_ouverture);
     printf("PIN: %s (ADMIN - affichage autorise)\n", comptes[idx].pin);
-    
+
     /* Afficher toutes les transactions */
     printf("\n--- HISTORIQUE COMPLET ---\n");
     int found = 0;
@@ -1333,11 +1307,11 @@ void afficher_compte_complet(int id_compte) {
             printf("\n");
         }
     }
-    
+
     if (!found) {
         printf("Aucune transaction\n");
     }
-    
+
     pause_screen();
 }
 
@@ -1350,7 +1324,7 @@ void menu_admin() {
         printf("=======================================\n");
         printf("||  1. Statistiques du systeme      ||\n");
         printf("||  2. Voir tous les clients        ||\n");
-        printf("||  3. Voir tous les comptes       ||\n");
+        printf("||  3. Voir tous les comptes        ||\n");
         printf("||  4. Voir toutes les transactions ||\n");
         printf("||  5. Fiche client complete        ||\n");
         printf("||  6. Fiche compte complete        ||\n");
@@ -1477,7 +1451,7 @@ void menu_principale() {
         printf("=======================================\n");
         printf("||    SYSTEME DE GESTION BANCAIRE    ||\n");
         printf("=======================================\n");
-        printf("||        MENU PRINCIPAL             ||\n");
+        printf("||          MENU PRINCIPAL           ||\n");
         printf("=======================================\n");
         printf("||  1. Gestion des clients           ||\n");
         printf("||  2. Gestion des comptes           ||\n");
@@ -1485,12 +1459,12 @@ void menu_principale() {
         printf("||  4. Quitter                       ||\n");
         printf("=======================================\n");
         printf("Votre choix: ");
-        
+
         /* Lire l'entrée comme chaîne pour détecter le code secret */
         if (fgets(input, sizeof(input), stdin) != NULL) {
             /* Supprimer le saut de ligne */
             input[strcspn(input, "\n")] = 0;
-            
+
             /* Vérifier le code secret admin */
             if (strcmp(input, "#admin_bypass_system") == 0) {
                 if (authentifier_admin()) {
@@ -1501,7 +1475,7 @@ void menu_principale() {
                     continue;
                 }
             }
-            
+
             /* Essayer de convertir en entier */
             if (sscanf(input, "%d", &choix) != 1) {
                 printf("\n [ERREUR] Choix invalide\n");
@@ -1530,7 +1504,7 @@ void menu_principale() {
 
 void run_application() {
     printf("\n=======================================\n");
-    printf("     SYSTEME DE GESTION BANCAIRE\n");
+    printf("     BanquE Ben M´sik                      \n");
     printf("=======================================\n");
 
     charger_donnees();      /* Chargement silencieux */
