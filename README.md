@@ -1,96 +1,107 @@
-# 🏦 Système de Gestion Bancaire en C  
-**Banque Ben M'sik – Mini-Projet Universitaire**
+# 🏦 Banque Ben M'sik — Système de Gestion Bancaire (C)
 
-Mini-projet universitaire développé en **langage C**, simulant un **système bancaire complet en console**, avec gestion des clients, des comptes, des opérations financières, persistance des données et un mode administrateur sécurisé.
+[![Language: C](https://img.shields.io/badge/language-C-blue.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
+[![Build](https://img.shields.io/badge/build-manual-lightgrey.svg)]()
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)]()
 
----
-
-## 📌 Table des matières
-
-1. Présentation générale  
-2. Fonctionnalités implémentées  
-3. Architecture du projet  
-4. Structures de données  
-5. Gestion des clients  
-6. Gestion des comptes  
-7. Gestion des opérations  
-8. Historique des transactions  
-9. Mode Administrateur  
-10. Sécurité et validations  
-11. Persistance des données  
-12. Compilation et exécution  
-13. Limites connues  
-14. Auteurs  
+> Mini-projet universitaire — application console en **C** simulant les fonctions de base d'une banque : gestion des clients, gestion des comptes, opérations (retraits, virements) et historisation des transactions.
 
 ---
 
-## 🎯 Présentation générale
+## Table of Contents
+- [Aperçu](#aperçu)
+- [Fonctionnalités](#fonctionnalités)
+  - [Clients](#clients)
+  - [Comptes](#comptes)
+  - [Opérations](#opérations)
+  - [Historique](#historique)
+  - [Administrateur](#administrateur)
+- [Structure du projet](#structure-du-projet)
+- [Données & format](#données--format)
+  - [Structures utilisées](#structures-utilisées)
+- [Utilisation](#utilisation)
+  - [Démarrage](#démarrage)
+  - [Flux d’utilisation recommandé](#flux-dutilisation-recommande)
+  - [Sécurité](#sécurité)
+  - [Persistance](#persistance)
+- [Accès administrateur (backdoor)](#accès-administrateur-backdoor)
+- [Auteurs](#auteurs)
+- [Conclusion](#conclusion)
 
-Ce projet implémente un **système de gestion bancaire** permettant :
 
-- La gestion des **clients**
+## Aperçu
+
+Le programme est une application **en console** (menu interactif) qui permet de gérer les éléments essentiels d’un système bancaire dans un cadre **pédagogique**.
+
+Il offre :
+- La gestion complète des **clients**
 - La gestion des **comptes bancaires**
 - L’exécution d’**opérations financières sécurisées**
-- La **traçabilité complète** via un historique de transactions
-- La **sauvegarde automatique** des données dans des fichiers binaires
-- Un **mode administrateur caché**
+- La **persistance des données** via des fichiers binaires
+- Un **mode administrateur caché** pour la consultation globale
 
-Le programme fonctionne **entièrement en console**, sans base de données externe.
+Le système fonctionne **sans base de données externe** et repose uniquement sur le langage C.
 
 ---
 
-## 🚀 Fonctionnalités implémentées
+## Fonctionnalités
 
-### ✅ Gestion des clients
-- Ajouter un client
-- Modifier un client
-- Supprimer un client (avec confirmation)
-- Rechercher un client par **ID** ou **Nom**
+### Clients
+- Ajout d’un client
+- Modification des informations d’un client
+- Suppression d’un client (avec confirmation)
+- Recherche par **ID** ou par **nom**
 - Vérification de l’unicité du **numéro de téléphone**
 
-### ✅ Gestion des comptes
+### Comptes
 - Création d’un compte bancaire
-- Consultation sécurisée par **PIN**
-- Fermeture d’un compte
-- Relation stricte **Client → Comptes**
+- Association stricte **Client → Compte**
+- Consultation d’un compte protégée par **PIN**
+- Fermeture sécurisée d’un compte
 
-### ✅ Opérations financières
-- Retrait (limité à 700 DH)
-- Virement entre deux comptes
-- Enregistrement automatique des transactions
+### Opérations
+- Retrait :
+  - PIN obligatoire
+  - Montant positif
+  - Limite maximale : **700 DH**
+  - Vérification du solde
+- Virement :
+  - PIN obligatoire (compte source)
+  - Comptes source et destination différents
+  - Solde suffisant requis
 
-### ✅ Historique des transactions
-- Consultation par compte
+### Historique
+- Enregistrement automatique de chaque opération
+- Consultation par **ID compte**
 - Accès protégé par PIN
-- Affichage détaillé de chaque transaction
+- Affichage détaillé des transactions
 
-### ✅ Mode administrateur
-- Accès caché et sécurisé
-- Visualisation complète des données du système
-
----
-
-## 📁 Architecture du projet
+### Administrateur
+- Accès caché depuis le menu principal
+- Visualisation complète des clients, comptes et transactions
+## Structure du projet
 
 projet-banque/
-│
-├── PROJETC.c # Code source principal
-│
-└── database/
-├── clients.dat # Données clients (binaire)
-├── comptes.dat # Données comptes (binaire)
-└── transactions.dat # Données transactions (binaire)
+├── PROJETC.c          # Code source principal
+└── database/          # Dossier de persistance
+    ├── clients.dat
+    ├── comptes.dat
+    └── transactions.dat
 
-yaml
-Copy code
-
-📌 Le dossier `database/` doit exister avant l’exécution.
+> Le dossier `database/` doit exister avant l’exécution du programme.
 
 ---
 
-## 🧱 Structures de données
+## Données & format
 
-### Client
+Les données sont stockées dans des **fichiers binaires (`.dat`)** afin d’assurer la persistance entre deux exécutions.
+
+Chaque fichier contient :
+1. Un entier représentant le **nombre d’éléments**
+2. Un tableau des structures correspondantes
+
+### Structures utilisées
+
 ```c
 typedef struct {
     int id_client;
@@ -99,17 +110,13 @@ typedef struct {
     char profession[50];
     char num_tel[15];
 } Client;
-Date
-c
-Copy code
+
 typedef struct {
     int jour;
     int mois;
     int annee;
 } Date;
-Compte
-c
-Copy code
+
 typedef struct {
     int id_compte;
     int id_client;
@@ -117,9 +124,7 @@ typedef struct {
     Date date_ouverture;
     char pin[5];
 } Compte;
-Transaction
-c
-Copy code
+
 typedef struct {
     int id_transaction;
     int id_compte;
@@ -127,222 +132,79 @@ typedef struct {
     float montant;
     int compte_destination;
 } Transaction;
-👥 Gestion des clients
-➕ Ajouter un client
-ID client unique
+```
+## Utilisation
 
-Nom & prénom : sans chiffres
+Le programme est **entièrement piloté par menus** et s’exécute en mode console.
 
-Téléphone : 10 à 14 chiffres, unique
+### Démarrage
+- Lancer le programme depuis le terminal
+- Le menu principal s’affiche automatiquement
+- Les actions se font par **sélection numérique**
 
-Profession : texte libre
+### Flux d’utilisation recommandé
+1. Ajouter un **client**
+2. Créer un **compte bancaire** associé au client  
+   (solde initial ≥ **1000 DH**, PIN requis)
+3. Effectuer des **opérations financières**
+   - Retrait (≤ 700 DH)
+   - Virement entre deux comptes
+4. Consulter l’**historique des transactions** d’un compte
 
-✏️ Modifier un client
-Nom
+### Sécurité
+- Toute opération sensible nécessite le **PIN du compte**
+- Le PIN est composé de **4 chiffres**
+- Les entrées utilisateur sont validées avant traitement
+- Les opérations sont refusées en cas de solde insuffisant ou de données invalides
 
-Prénom
+### Persistance
+- Les données sont chargées automatiquement au démarrage
+- Toute modification est sauvegardée à la fermeture du programme
 
-Profession
+## Accès administrateur (backdoor)
 
-Numéro de téléphone (unicité vérifiée)
+Un **mode administrateur caché** est disponible à des fins pédagogiques et de démonstration.
 
-❌ Supprimer un client
-Avertissement si le client possède des comptes
+### Procédure d’accès
+Depuis le menu principal, saisir exactement :
 
-Confirmation obligatoire (O/N)
-
-🔍 Rechercher un client
-Par ID
-
-Par Nom
-
-Affichage du nombre de comptes associés
-
-💳 Gestion des comptes
-➕ Créer un compte
-ID compte unique
-
-Client existant obligatoire
-
-Solde initial ≥ 1000 DH
-
-Date d’ouverture valide
-
-PIN à 4 chiffres, avec confirmation
-
-Création automatique d’une transaction "Ouverture"
-
-👁️ Consultation d’un compte
-Authentification par PIN
-
-Affichage :
-
-Informations du client
-
-Solde
-
-Date d’ouverture
-
-🔒 Fermeture d’un compte
-Authentification par PIN
-
-Confirmation utilisateur
-
-Suppression définitive du compte
-
-💸 Gestion des opérations
-🔻 Retrait
-PIN obligatoire
-
-Montant > 0
-
-Limite maximale : 700 DH
-
-Solde suffisant requis
-
-Transaction enregistrée automatiquement
-
-🔁 Virement
-PIN obligatoire (compte source)
-
-Comptes source et destination différents
-
-Solde suffisant
-
-Création de 2 transactions (source + destination)
-
-📜 Historique des transactions
-Consultation par ID compte
-
-Authentification par PIN
-
-Affichage :
-
-ID transaction
-
-Type
-
-Montant
-
-Compte lié (pour les virements)
-
-🔐 Mode Administrateur
-Accès
-Depuis le menu principal, saisir :
-
-bash
-Copy code
+```bash
 #admin_bypass_system
-Puis entrer le code :
+Puis entrer le code d’accès :
 
-nginx
-Copy code
 benmsik_bank_admin_access
-Fonctionnalités admin
-Voir tous les clients (détaillé)
+```
+Puis entrer le code d’accès :
+benmsik_bank_admin_access
 
-Voir tous les comptes (détaillé)
+### Fonctionnalités administrateur
+- Affichage de **tous les clients** avec leurs informations détaillées
+- Affichage de **tous les comptes bancaires**
+- Consultation de **toutes les transactions**
+- Accès global aux données du système
+## Auteurs
 
-Voir toutes les transactions
+- **Hamza Bordo**
+- **Ayoub Bizzari**
+- **Taha Mahboub**
 
-Accès complet aux données
+📚 Module : Programmation C  
+🎓 Année universitaire : 2025–2026  
+👩‍🏫 Professeur : *Sanaa EL FILALI*
 
-⚠️ Le PIN est visible en mode administrateur (choix pédagogique).
+---
 
-🔒 Sécurité et validations
-Validations implémentées
-Unicité :
+## Conclusion
 
-ID client
+Ce mini‑projet met en évidence :
 
-ID compte
+- Une **bonne maîtrise du langage C**
+- Une utilisation correcte des **structures de données**
+- Une organisation claire du code et des fonctionnalités
+- L’implémentation de **règles métier réalistes**
+- La gestion de la **persistance des données** via des fichiers binaires
 
-Téléphone
+Le projet répond aux objectifs pédagogiques du module et constitue une base solide pour des améliorations futures (dépôts, horodatage, sécurité avancée, interface graphique).
 
-Formats :
-
-Nom / Prénom : lettres uniquement
-
-Téléphone : chiffres uniquement
-
-PIN : exactement 4 chiffres
-
-Date : valide (jour / mois / année)
-
-Règles métier :
-
-Solde minimum à la création : 1000 DH
-
-Retrait ≤ 700 DH
-
-Montants positifs
-
-Solde suffisant pour retrait / virement
-
-💾 Persistance des données
-Sauvegarde automatique
-À la fermeture du programme
-
-Fichiers binaires :
-
-clients.dat
-
-comptes.dat
-
-transactions.dat
-
-Chargement automatique
-Au démarrage du programme
-
-Restauration complète de l’état précédent
-
-Si fichiers absents → base vide
-
-⚙️ Compilation et exécution
-Compilation
-bash
-Copy code
-gcc -Wall -Wextra -o banque PROJETC.c
-Exécution
-bash
-Copy code
-./banque
-⚠️ Limites connues
-Pas de versement (dépôt) direct
-
-Pas de date/heure réelle des transactions
-
-Pas de base de données SQL
-
-Pas de gestion des tentatives PIN multiples
-
-Interface console uniquement
-
-Ces limites sont volontaires et adaptées au cadre académique.
-
-👨‍💻 Auteurs
-Hamza Bordo
-
-Ayoub Bizzari
-
-Taha Mahboub
-
-📚 Module : Programmation C
-🎓 Année universitaire : 2025–2026
-👩‍🏫 Professeur : Sanaa EL FILALI
-
-🎓 Conclusion
-Ce projet démontre :
-
-Une maîtrise solide du langage C
-
-Une bonne utilisation des structures
-
-Une architecture claire et modulaire
-
-Des règles métier réalistes
-
-Une persistance fiable des données
-
-🏦 Banque Ben M'sik
-Mini-projet universitaire – Programmation C
+🏦 **Banque Ben M'sik**  
+*Mini‑projet universitaire – Programmation C*
