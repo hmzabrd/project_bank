@@ -16,10 +16,6 @@
   - [Transaction History](#transaction-history)
 - [Project Structure](#project-structure)
 - [Data Structures](#data-structures)
-- [Installation & Usage](#installation--usage)
-  - [Compilation](#compilation)
-  - [Running the Program](#running-the-program)
-  - [Recommended Workflow](#recommended-workflow)
 - [Security Features](#security-features)
 - [Technical Implementation](#technical-implementation)
 - [Author](#author)
@@ -87,11 +83,16 @@ The system operates **without external databases** and relies solely on the C pr
 
 ```
 bank-management-system/
-├── bank_system.c        # Main source code
-└── accounts.txt         # Data persistence file
+├── bank_system.c          # Main source code
+└── Database               # Data persistence folder
+    └── client.txt         # clients data storage
+    └── comptes.txt        # accounts data storage
+    └── historique.txt     # history data storage
+    └── transaction.txt    # transaction data storage
 ```
 
-> The `accounts.txt` file is created automatically on first run.
+> The `accounts.txt, comptes.txt, historique.txt, transaction.txt` files are created automatically on first run.
+
 
 ---
 
@@ -108,66 +109,6 @@ struct Account {
 }
 ```
 
-### File Format
-Data is stored in a simple text-based format in `accounts.txt`:
-- Each line represents one account
-- Fields are space-separated for easy parsing
-- Transaction history maintained in program memory during runtime
-
----
-
-## Installation & Usage
-
-### Compilation
-
-Compile the program using GCC or any C compiler:
-
-```bash
-gcc bank_system.c -o bank_system
-```
-
-Or with additional flags:
-
-```bash
-gcc -Wall -Wextra bank_system.c -o bank_system
-```
-
-### Running the Program
-
-Execute the compiled binary:
-
-```bash
-./bank_system
-```
-
-The main menu will appear with the following options:
-
-```
-=== Bank Management System ===
-1. Create Account
-2. Deposit
-3. Withdraw
-4. Transfer
-5. Check Balance
-6. View Transaction History
-7. Exit
-```
-
-### Recommended Workflow
-
-1. **Create an Account**
-   - Enter desired account number
-   - Set a 4-digit PIN
-   - Specify initial balance
-
-2. **Perform Operations**
-   - Deposit funds to add money
-   - Withdraw with PIN authentication
-   - Transfer between accounts securely
-
-3. **Monitor Activity**
-   - Check balance anytime
-   - View transaction history for audit trail
 
 ---
 
@@ -231,14 +172,6 @@ This project demonstrates:
 - **Input validation and error handling**
 - **Implementation of realistic banking business rules**
 - **Clean code organization** and logical flow
-
-The system provides a solid foundation for understanding core programming concepts and can be extended with features such as:
-- Multiple user types (admin/customer)
-- Interest calculation
-- Account statements export
-- Enhanced security (password encryption)
-- Database integration
-- Graphical user interface
 
 🏦 **Bank Management System**  
 *Academic Project — C Programming*
