@@ -1,210 +1,244 @@
-# 🏦 Banque Ben M'sik — Système de Gestion Bancaire (C)
+# 🏦 Bank Management System — Système de Gestion Bancaire (C)
 
 [![Language: C](https://img.shields.io/badge/language-C-blue.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
-[![Build](https://img.shields.io/badge/build-manual-lightgrey.svg)]()
+[![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)]()
 
-> Mini-projet universitaire — application console en **C** simulant les fonctions de base d'une banque : gestion des clients, gestion des comptes, opérations (retraits, virements) et historisation des transactions.
+> Console-based banking application in **C** simulating core banking operations: account management, deposits, withdrawals, transfers, and transaction history tracking.
 
 ---
 
 ## Table of Contents
-- [Aperçu](#aperçu)
-- [Fonctionnalités](#fonctionnalités)
-  - [Clients](#clients)
-  - [Comptes](#comptes)
-  - [Opérations](#opérations)
-  - [Historique](#historique)
-  - [Administrateur](#administrateur)
-- [Structure du projet](#structure-du-projet)
-- [Données & format](#données--format)
-  - [Structures utilisées](#structures-utilisées)
-- [Utilisation](#utilisation)
-  - [Démarrage](#démarrage)
-  - [Flux d’utilisation recommandé](#flux-dutilisation-recommande)
-  - [Sécurité](#sécurité)
-  - [Persistance](#persistance)
-- [Accès administrateur (backdoor)](#accès-administrateur-backdoor)
-- [Auteurs](#auteurs)
+- [Overview](#overview)
+- [Features](#features)
+  - [Account Management](#account-management)
+  - [Financial Operations](#financial-operations)
+  - [Transaction History](#transaction-history)
+- [Project Structure](#project-structure)
+- [Data Structures](#data-structures)
+- [Installation & Usage](#installation--usage)
+  - [Compilation](#compilation)
+  - [Running the Program](#running-the-program)
+  - [Recommended Workflow](#recommended-workflow)
+- [Security Features](#security-features)
+- [Technical Implementation](#technical-implementation)
+- [Author](#author)
 - [Conclusion](#conclusion)
 
+---
 
-## Aperçu
+## Overview
 
-Le programme est une application **en console** (menu interactif) qui permet de gérer les éléments essentiels d’un système bancaire dans un cadre **pédagogique**.
+This program is a **console-based application** that manages essential banking operations in an educational context.
 
-Il offre :
-- La gestion complète des **clients**
-- La gestion des **comptes bancaires**
-- L’exécution d’**opérations financières sécurisées**
-- La **persistance des données** via des fichiers binaires
-- Un **mode administrateur caché** pour la consultation globale
+**Key capabilities:**
+- Complete **account management** system
+- **Financial operations** (deposits, withdrawals, transfers)
+- **Transaction history** tracking and consultation
+- **Data persistence** through file handling
+- Input validation and security measures
 
-Le système fonctionne **sans base de données externe** et repose uniquement sur le langage C.
+The system operates **without external databases** and relies solely on the C programming language and file I/O operations.
 
 ---
 
-## Fonctionnalités
+## Features
 
-### Clients
-- Ajout d’un client
-- Modification des informations d’un client
-- Suppression d’un client (avec confirmation)
-- Recherche par **ID** ou par **nom**
-- Vérification de l’unicité du **numéro de téléphone**
+### Account Management
+- Create new bank accounts with unique account numbers
+- Set initial balance and 4-digit PIN during account creation
+- View account details (balance, account number)
+- PIN-protected access to sensitive operations
+- Account information stored persistently
 
-### Comptes
-- Création d’un compte bancaire
-- Association stricte **Client → Compte**
-- Consultation d’un compte protégée par **PIN**
-- Fermeture sécurisée d’un compte
+### Financial Operations
 
-### Opérations
-- Retrait :
-  - PIN obligatoire
-  - Montant positif
-  - Limite maximale : **700 DH**
-  - Vérification du solde
-- Virement :
-  - PIN obligatoire (compte source)
-  - Comptes source et destination différents
-  - Solde suffisant requis
+**Deposits:**
+- Add funds to any account
+- Positive amount validation
+- Immediate balance update
+- Transaction recorded in history
 
-### Historique
-- Enregistrement automatique de chaque opération
-- Consultation par **ID compte**
-- Accès protégé par PIN
-- Affichage détaillé des transactions
+**Withdrawals:**
+- PIN authentication required
+- Positive amount validation
+- Sufficient balance verification
+- Balance updated after successful withdrawal
+- Transaction logged
 
-### Administrateur
-- Accès caché depuis le menu principal
-- Visualisation complète des clients, comptes et transactions
-## Structure du projet
+**Transfers:**
+- Transfer funds between accounts
+- PIN authentication for source account
+- Validates both source and destination accounts exist
+- Ensures sufficient balance in source account
+- Updates both accounts simultaneously
+- Records transaction for both accounts
 
-projet-banque/
-├── PROJETC.c          # Code source principal
-└── database/          # Dossier de persistance
-    ├── clients.dat
-    ├── comptes.dat
-    └── transactions.dat
-
-> Le dossier `database/` doit exister avant l’exécution du programme.
+### Transaction History
+- View complete transaction history for any account
+- Shows transaction type (Deposit/Withdrawal/Transfer)
+- Displays amount and destination account (for transfers)
+- Chronological listing of all operations
+- Helps track account activity
 
 ---
 
-## Données & format
+## Project Structure
 
-Les données sont stockées dans des **fichiers binaires (`.dat`)** afin d’assurer la persistance entre deux exécutions.
+```
+bank-management-system/
+├── bank_system.c        # Main source code
+└── accounts.txt         # Data persistence file
+```
 
-Chaque fichier contient :
-1. Un entier représentant le **nombre d’éléments**
-2. Un tableau des structures correspondantes
+> The `accounts.txt` file is created automatically on first run.
 
-### Structures utilisées
+---
+
+## Data Structures
+
+The program uses a structured approach to store account information:
 
 ```c
-typedef struct {
-    int id_client;
-    char nom[50];
-    char prenom[50];
-    char profession[50];
-    char num_tel[15];
-} Client;
-
-typedef struct {
-    int jour;
-    int mois;
-    int annee;
-} Date;
-
-typedef struct {
-    int id_compte;
-    int id_client;
-    float solde;
-    Date date_ouverture;
-    char pin[5];
-} Compte;
-
-typedef struct {
-    int id_transaction;
-    int id_compte;
-    char type[20];
-    float montant;
-    int compte_destination;
-} Transaction;
+struct Account {
+    int accountNumber;      // Unique identifier
+    char pin[5];           // 4-digit PIN (string for leading zeros)
+    float balance;         // Current account balance
+    // Transaction history stored separately
+}
 ```
-## Utilisation
 
-Le programme est **entièrement piloté par menus** et s’exécute en mode console.
+### File Format
+Data is stored in a simple text-based format in `accounts.txt`:
+- Each line represents one account
+- Fields are space-separated for easy parsing
+- Transaction history maintained in program memory during runtime
 
-### Démarrage
-- Lancer le programme depuis le terminal
-- Le menu principal s’affiche automatiquement
-- Les actions se font par **sélection numérique**
+---
 
-### Flux d’utilisation recommandé
-1. Ajouter un **client**
-2. Créer un **compte bancaire** associé au client  
-   (solde initial ≥ **1000 DH**, PIN requis)
-3. Effectuer des **opérations financières**
-   - Retrait (≤ 700 DH)
-   - Virement entre deux comptes
-4. Consulter l’**historique des transactions** d’un compte
+## Installation & Usage
 
-### Sécurité
-- Toute opération sensible nécessite le **PIN du compte**
-- Le PIN est composé de **4 chiffres**
-- Les entrées utilisateur sont validées avant traitement
-- Les opérations sont refusées en cas de solde insuffisant ou de données invalides
+### Compilation
 
-### Persistance
-- Les données sont chargées automatiquement au démarrage
-- Toute modification est sauvegardée à la fermeture du programme
-
-## Accès administrateur (backdoor)
-
-Un **mode administrateur caché** est disponible à des fins pédagogiques et de démonstration.
-
-### Procédure d’accès
-Depuis le menu principal, saisir exactement :
+Compile the program using GCC or any C compiler:
 
 ```bash
-#admin_bypass_system
-Puis entrer le code d’accès :
-
-benmsik_bank_admin_access
+gcc bank_system.c -o bank_system
 ```
-Puis entrer le code d’accès :
-benmsik_bank_admin_access
 
-### Fonctionnalités administrateur
-- Affichage de **tous les clients** avec leurs informations détaillées
-- Affichage de **tous les comptes bancaires**
-- Consultation de **toutes les transactions**
-- Accès global aux données du système
-## Auteurs
+Or with additional flags:
 
-- **Hamza Bordo**
-- **Ayoub Bizzari**
-- **Taha Mahboub**
+```bash
+gcc -Wall -Wextra bank_system.c -o bank_system
+```
 
-📚 Module : Programmation C  
-🎓 Année universitaire : 2025–2026  
-👩‍🏫 Professeur : *Sanaa EL FILALI*
+### Running the Program
+
+Execute the compiled binary:
+
+```bash
+./bank_system
+```
+
+The main menu will appear with the following options:
+
+```
+=== Bank Management System ===
+1. Create Account
+2. Deposit
+3. Withdraw
+4. Transfer
+5. Check Balance
+6. View Transaction History
+7. Exit
+```
+
+### Recommended Workflow
+
+1. **Create an Account**
+   - Enter desired account number
+   - Set a 4-digit PIN
+   - Specify initial balance
+
+2. **Perform Operations**
+   - Deposit funds to add money
+   - Withdraw with PIN authentication
+   - Transfer between accounts securely
+
+3. **Monitor Activity**
+   - Check balance anytime
+   - View transaction history for audit trail
+
+---
+
+## Security Features
+
+- **PIN Protection**: All sensitive operations require 4-digit PIN verification
+- **Input Validation**: 
+  - Positive amounts enforced for all transactions
+  - Account existence verified before operations
+  - Duplicate account numbers prevented
+- **Balance Verification**: Withdrawals and transfers check for sufficient funds
+- **Data Persistence**: Account data saved to file, loaded on startup
+- **Transaction Logging**: Complete audit trail of all operations
+
+---
+
+## Technical Implementation
+
+### Key Programming Concepts Demonstrated:
+
+1. **Structures**: Used to organize account data efficiently
+2. **File I/O**: 
+   - Read/write operations for data persistence
+   - Text-based storage for portability
+3. **Input Validation**: Robust checking of user inputs
+4. **Menu-Driven Interface**: User-friendly console navigation
+5. **Array Management**: Dynamic handling of multiple accounts
+6. **String Operations**: PIN comparison and account searching
+7. **Error Handling**: Graceful handling of invalid operations
+
+### Core Functions:
+- `createAccount()` - Account registration with validation
+- `deposit()` - Add funds to account
+- `withdraw()` - Remove funds with authentication
+- `transfer()` - Move funds between accounts
+- `checkBalance()` - Display account balance
+- `viewHistory()` - Show transaction records
+- `saveAccounts()` - Persist data to file
+- `loadAccounts()` - Load data from file
+
+---
+
+## Author
+
+**Hamza Bordo**
+
+📚 Project Type: Academic Programming Project  
+💻 Language: C  
+🎓 Institution: Faculté des Sciences Ben M'Sik  
+📅 Year: 2024-2025
 
 ---
 
 ## Conclusion
 
-Ce mini‑projet met en évidence :
+This project demonstrates:
 
-- Une **bonne maîtrise du langage C**
-- Une utilisation correcte des **structures de données**
-- Une organisation claire du code et des fonctionnalités
-- L’implémentation de **règles métier réalistes**
-- La gestion de la **persistance des données** via des fichiers binaires
+- **Strong command of C programming fundamentals**
+- **Effective use of data structures** (structs, arrays)
+- **File handling** for data persistence
+- **Input validation and error handling**
+- **Implementation of realistic banking business rules**
+- **Clean code organization** and logical flow
 
-Le projet répond aux objectifs pédagogiques du module et constitue une base solide pour des améliorations futures (dépôts, horodatage, sécurité avancée, interface graphique).
+The system provides a solid foundation for understanding core programming concepts and can be extended with features such as:
+- Multiple user types (admin/customer)
+- Interest calculation
+- Account statements export
+- Enhanced security (password encryption)
+- Database integration
+- Graphical user interface
 
-🏦 **Banque Ben M'sik**  
-*Mini‑projet universitaire – Programmation C*
+🏦 **Bank Management System**  
+*Academic Project — C Programming*
