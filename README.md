@@ -154,6 +154,8 @@ struct Account {
 ## Author
 
 **Hamza Bordo**
+**Taha Mahboub**
+**Ayoub Bizarri**
 
 📚 Project Type: Academic Programming Project  
 💻 Language: C  
