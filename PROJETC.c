@@ -111,6 +111,43 @@ void clear_screen() {
     system("cls");
 }
 
+int lire_entier_avec_annulation(const char *message, int *valeur) {
+    char input[50];
+    printf("%s: ", message);  // REMOVED the cancel text
+    scanf("%49s", input);
+
+    if (strcmp(input, "c") == 0 || strcmp(input, "C") == 0) {
+        return 0;
+    }
+
+    *valeur = atoi(input);
+    return 1;
+}
+
+int lire_float_avec_annulation(const char *message, float *valeur) {
+    char input[50];
+    printf("%s: ", message);  // REMOVED the cancel text
+    scanf("%49s", input);
+
+    if (strcmp(input, "c") == 0 || strcmp(input, "C") == 0) {
+        return 0;
+    }
+
+    *valeur = atof(input);
+    return 1;
+}
+
+int lire_chaine_avec_annulation(const char *message, char *buffer, int taille) {
+    printf("%s: ", message);  // REMOVED the cancel text
+    scanf("%s", buffer);
+
+    if (strcmp(buffer, "c") == 0 || strcmp(buffer, "C") == 0) {
+        return 0;
+    }
+
+    return 1;
+}
+
 int menu_avec_fleches(char *titre, char *options[], int nb_options) {
     int selection = 0;
     int key;
@@ -122,7 +159,8 @@ int menu_avec_fleches(char *titre, char *options[], int nb_options) {
         printf("%s", titre);
 
         printf("\n" COLOR_YELLOW "Utilisez les fleches HAUT/BAS pour naviguer\n");
-        printf("Appuyez sur ENTREE pour selectionner\n" COLOR_RESET);
+        printf("Appuyez sur ENTREE pour selectionner\n");
+        printf("Tapez 'c' dans n'importe quel champ pour annuler\n" COLOR_RESET);
 
         // Display menu with highlighting
         for(int i = 0; i < nb_options; i++) {
@@ -303,27 +341,58 @@ void Ajoute_un_client() {
     c.id_client = next_client_id;
 
     do {
-        printf("Nom: ");
-        scanf("%49s", c.nom);
+        if (!lire_chaine_avec_annulation("Nom", c.nom, 50)) {
+            printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+            pause_ecran();
+            Gestion_des_clients();
+            return;
+        }
+        for(int i = 0; c.nom[i]; i++) {
+            c.nom[i] = tolower(c.nom[i]);
+        }
         if (!valider_nom(c.nom)) {
             printf(COLOR_RED "Nom invalide (pas de chiffres autorises)\n" COLOR_RESET);
         }
     } while (!valider_nom(c.nom));
 
     do {
-        printf("Prenom: ");
-        scanf("%49s", c.prenom);
+        if (!lire_chaine_avec_annulation("Prenom", c.prenom, 50)) {
+            printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+            pause_ecran();
+            Gestion_des_clients();
+            return;
+        }
+        for(int i = 0; c.prenom[i]; i++) {
+            c.prenom[i] = tolower(c.prenom[i]);
+        }
         if (!valider_nom(c.prenom)) {
             printf(COLOR_RED "Prenom invalide (pas de chiffres autorises)\n" COLOR_RESET);
         }
     } while (!valider_nom(c.prenom));
 
-    printf("Profession: ");
-    scanf("%49s", c.profession);
+     for(int i = 0; i < nb_clients; i++) {
+        if(strcmp(clients[i].nom, c.nom) == 0 && strcmp(clients[i].prenom, c.prenom) == 0) {
+            printf(COLOR_RED "Ce client existe deja dans le systeme!\n" COLOR_RESET);
+            pause_ecran();
+            Gestion_des_clients();
+            return;
+        }
+    }
+
+    if (!lire_chaine_avec_annulation("Profession", c.profession, 50)) {
+        printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+        pause_ecran();
+        Gestion_des_clients();
+        return;
+    }
 
     do {
-        printf("Telephone (10-14 chiffres): ");
-        scanf("%14s", c.num_tel);
+        if (!lire_chaine_avec_annulation("Telephone (10-14 chiffres)", c.num_tel, 15)) {
+            printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+            pause_ecran();
+            Gestion_des_clients();
+            return;
+        }
 
         if (!valider_telephone(c.num_tel)) {
             printf(COLOR_RED "Telephone invalide (doit contenir que des chiffres)\n" COLOR_RESET);
@@ -351,8 +420,12 @@ void Modifications() {
     int id, choix;
     printf("\n" COLOR_CYAN "--- MODIFIER UN CLIENT ---\n" COLOR_RESET);
 
-    printf("Entrez l'ID du client: ");
-    scanf("%d", &id);
+    if (!lire_entier_avec_annulation("Entrez l'ID du client", &id)) {
+        printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+        pause_ecran();
+        Gestion_des_clients();
+        return;
+    }
 
     int i = chercherClientParId(id);
     if (i == -1) {
@@ -378,30 +451,70 @@ void Modifications() {
     switch(choix) {
         case 1:
             do {
-                printf("Nouveau nom: ");
-                scanf("%49s", clients[i].nom);
+                if (!lire_chaine_avec_annulation("Nouveau nom", clients[i].nom, 50)) {
+                    printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+                    pause_ecran();
+                    Gestion_des_clients();
+                    return;
+                }
+                for(int j = 0; clients[i].nom[j]; j++) {
+                    clients[i].nom[j] = tolower(clients[i].nom[j]);
+                }
                 if (!valider_nom(clients[i].nom)) {
                     printf(COLOR_RED "Nom invalide\n" COLOR_RESET);
                 }
             } while (!valider_nom(clients[i].nom));
+
+            for(int j = 0; j < nb_clients; j++) {
+                if(j != i && strcmp(clients[j].nom, clients[i].nom) == 0 && strcmp(clients[j].prenom, clients[i].prenom) == 0) {
+                    printf(COLOR_RED "Ce client existe deja dans le systeme!\n" COLOR_RESET);
+                    pause_ecran();
+                    Gestion_des_clients();
+                    return;
+                }
+            }
             break;
         case 2:
             do {
-                printf("Nouveau prenom: ");
-                scanf("%49s", clients[i].prenom);
+                if (!lire_chaine_avec_annulation("Nouveau prenom", clients[i].prenom, 50)) {
+                    printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+                    pause_ecran();
+                    Gestion_des_clients();
+                    return;
+                }
+                for(int j = 0; clients[i].prenom[j]; j++) {
+                    clients[i].prenom[j] = tolower(clients[i].prenom[j]);
+                }
                 if (!valider_nom(clients[i].prenom)) {
                     printf(COLOR_RED "Prenom invalide\n" COLOR_RESET);
                 }
             } while (!valider_nom(clients[i].prenom));
+
+            for(int j = 0; j < nb_clients; j++) {
+                if(j != i && strcmp(clients[j].nom, clients[i].nom) == 0 && strcmp(clients[j].prenom, clients[i].prenom) == 0) {
+                    printf(COLOR_RED "Ce client existe deja dans le systeme!\n" COLOR_RESET);
+                    pause_ecran();
+                    Gestion_des_clients();
+                    return;
+                }
+            }
             break;
         case 3:
-            printf("Nouvelle profession: ");
-            scanf("%49s", clients[i].profession);
+            if (!lire_chaine_avec_annulation("Nouvelle profession", clients[i].profession, 50)) {
+                printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+                pause_ecran();
+                Gestion_des_clients();
+                return;
+            }
             break;
         case 4:
             do {
-                printf("Nouveau telephone: ");
-                scanf("%14s", clients[i].num_tel);
+                if (!lire_chaine_avec_annulation("Nouveau telephone", clients[i].num_tel, 15)) {
+                    printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+                    pause_ecran();
+                    Gestion_des_clients();
+                    return;
+                }
                 if (!valider_telephone(clients[i].num_tel)) {
                     printf(COLOR_RED "Telephone invalide\n" COLOR_RESET);
                 } else if (telephone_existe(clients[i].num_tel, clients[i].id_client)) {
@@ -428,8 +541,12 @@ void Suppression() {
     char log_msg[256];
     printf("\n" COLOR_CYAN "--- SUPPRIMER UN CLIENT ---\n" COLOR_RESET);
 
-    printf("Entrez l'ID du client: ");
-    scanf("%d", &id);
+    if (!lire_entier_avec_annulation("Entrez l'ID du client", &id)) {
+        printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+        pause_ecran();
+        Gestion_des_clients();
+        return;
+    }
 
     int i = chercherClientParId(id);
     if (i == -1) {
@@ -487,12 +604,23 @@ void Recherche() {
 
     int i = -1;
     if (choix == 1) {
-        printf("ID du client: ");
-        scanf("%d", &id);
+        if (!lire_entier_avec_annulation("ID du client", &id)) {
+            printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+            pause_ecran();
+            Gestion_des_clients();
+            return;
+        }
         i = chercherClientParId(id);
-    } else {
-        printf("Nom du client: ");
-        scanf("%49s", nom);
+     } else {
+        if (!lire_chaine_avec_annulation("Nom du client", nom, 50)) {
+            printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+            pause_ecran();
+            Gestion_des_clients();
+            return;
+        }
+        for(int j = 0; nom[j]; j++) {
+            nom[j] = tolower(nom[j]);
+        }
         i = chercherClientParNom(nom);
     }
 
@@ -500,14 +628,14 @@ void Recherche() {
         printf(COLOR_RED "Client introuvable!\n" COLOR_RESET);
     } else {
         printf("\n" COLOR_GREEN "Client trouve:\n" COLOR_RESET);
-        printf("+------+----------------------+----------------------+----------------------+---------------+\n");
-        printf("| %-4s | %-20s | %-20s | %-20s | %-13s |\n",
-               "ID", "Nom", "Prenom", "Profession", "Telephone");
-        printf("+------+----------------------+----------------------+----------------------+---------------+\n");
-        printf("| %-4d | %-20s | %-20s | %-20s | %-13s |\n",
-               clients[i].id_client, clients[i].nom, clients[i].prenom,
-               clients[i].profession, clients[i].num_tel);
-        printf("+------+----------------------+----------------------+----------------------+---------------+\n");
+        printf("+------+--------------------------+--------------------------+--------------------------+---------------+\n");
+        printf("| %-4s | %-24s | %-24s | %-24s | %-13s |\n",
+                "ID", "Nom", "Prenom", "Profession", "Telephone");
+        printf("+------+--------------------------+--------------------------+--------------------------+---------------+\n");
+        printf("| %-4d | %-24s | %-24s | %-24s | %-13s |\n",
+                clients[i].id_client, clients[i].nom, clients[i].prenom,
+                clients[i].profession, clients[i].num_tel);
+        printf("+------+--------------------------+--------------------------+--------------------------+---------------+\n");
         printf("Nombre de comptes: %d\n", compter_comptes_client(clients[i].id_client));
     }
 
@@ -532,8 +660,12 @@ void Nouveau_compte() {
         return;
     }
 
-    printf("ID du client: ");
-    scanf("%d", &id_client);
+    if (!lire_entier_avec_annulation("ID du client", &id_client)) {
+        printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+        pause_ecran();
+        Gestion_des_comptes();
+        return;
+    }
 
     if (chercherClientParId(id_client) == -1) {
         ERREUR_RETOUR("Client inexistant!", Gestion_des_comptes);
@@ -544,28 +676,50 @@ void Nouveau_compte() {
     c.id_client = id_client;
 
     do {
-        printf("Solde initial (minimum %.2f DH): ", SOLDE_MIN);
-        scanf("%f", &c.solde);
+        float solde_temp;
+        printf("Solde initial (minimum %.2f DH)", SOLDE_MIN);
+        if (!lire_float_avec_annulation("", &solde_temp)) {
+            printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+            pause_ecran();
+            Gestion_des_comptes();
+            return;
+        }
+        c.solde = solde_temp;
         if (c.solde < SOLDE_MIN) {
             printf(COLOR_RED "Le solde doit etre au moins %.2f DH!\n" COLOR_RESET, SOLDE_MIN);
         }
     } while (c.solde < SOLDE_MIN);
-
     do {
+        char input[50];
         printf("Date d'ouverture (JJ MM AAAA): ");
-        scanf("%d %d %d", &c.date_ouverture.jour, &c.date_ouverture.mois, &c.date_ouverture.annee);
+        scanf("%49s", input);
+
+        if (strcmp(input, "c") == 0 || strcmp(input, "C") == 0) {
+            printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+            pause_ecran();
+            Gestion_des_comptes();
+            return;
+        }
+
+        c.date_ouverture.jour = atoi(input);
+        scanf("%d %d", &c.date_ouverture.mois, &c.date_ouverture.annee);
+
         if (!valider_date(c.date_ouverture.jour, c.date_ouverture.mois, c.date_ouverture.annee)) {
             printf(COLOR_RED "Date invalide!\n" COLOR_RESET);
         }
     } while (!valider_date(c.date_ouverture.jour, c.date_ouverture.mois, c.date_ouverture.annee));
 
     do {
-        printf("Code PIN (%d chiffres): ", PIN_LENGTH);
-        scanf("%4s", c.pin);
-        if (!valider_chaine(c.pin, PIN_LENGTH, PIN_LENGTH, 1)) {
-            printf(COLOR_RED "PIN invalide (doit contenir %d chiffres)!\n" COLOR_RESET, PIN_LENGTH);
+        if (!lire_chaine_avec_annulation("Code PIN (4 chiffres)", c.pin, PIN_LENGTH + 1)) {
+            printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+            pause_ecran();
+            Gestion_des_comptes();
+            return;
         }
-    } while (!valider_chaine(c.pin, PIN_LENGTH, PIN_LENGTH, 1));
+        if (strlen(c.pin) != PIN_LENGTH) {
+            printf(COLOR_RED "Le PIN doit contenir exactement %d chiffres!\n" COLOR_RESET, PIN_LENGTH);
+        }
+    } while (strlen(c.pin) != PIN_LENGTH);
 
     comptes[nb_comptes] = c;
     nb_comptes++;
@@ -581,63 +735,53 @@ void Nouveau_compte() {
 }
 
 void consultation() {
-    int choix, id;
-    printf("\n" COLOR_CYAN "--- CONSULTATION ---\n" COLOR_RESET);
+    clear_screen();
+    printf("\n" COLOR_BLUE "**************************************\n");
+    printf("*        CONSULTATION DE COMPTE      *\n");
+    printf("**************************************\n" COLOR_RESET);
 
-    do {
-        printf("1. Afficher tous les comptes\n");
-        printf("2. Afficher un compte specifique\n");
-        printf("3. Retour\n");
-        printf("Choix: ");
-        scanf("%d", &choix);
-    } while (choix < 1 || choix > 3);
-
-    if (choix == 3) {
+    int rib;
+    if (!lire_entier_avec_annulation("RIB du compte (9 chiffres)", &rib)) {
+        printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+        pause_ecran();
         Gestion_des_comptes();
         return;
     }
+    while(getchar() != '\n');  // Clear buffer
 
-    if (choix == 1) {
-        if (nb_comptes == 0) {
-            printf(COLOR_YELLOW "Aucun compte enregistre.\n" COLOR_RESET);
-        } else {
-            printf("\n+------------+----------+---------------+------------+\n");
-            printf("| %-10s | %-8s | %-13s | %-10s |\n",
-                   "RIB", "Client", "Solde (DH)", "Date");
-            printf("+------------+----------+---------------+------------+\n");
-            for (int i = 0; i < nb_comptes; i++) {
-                printf("| %09d | %-8d | %13.2f | %02d/%02d/%d |\n",
-                       comptes[i].id_compte,
-                       comptes[i].id_client,
-                       comptes[i].solde,
-                       comptes[i].date_ouverture.jour,
-                       comptes[i].date_ouverture.mois,
-                       comptes[i].date_ouverture.annee);
-            }
-            printf("+------------+----------+---------------+------------+\n");
-        }
-    } else {
-        printf("RIB du compte (9 chiffres): ");
-        scanf("%d", &id);
-
-        int i = chercherCompteParId(id);
-        if (i == -1) {
-            printf(COLOR_RED "Compte introuvable!\n" COLOR_RESET);
-        } else {
-            int idx_client = chercherClientParId(comptes[i].id_client);
-            printf("\n" COLOR_GREEN "Informations du compte:\n" COLOR_RESET);
-            printf("RIB: %09d\n", comptes[i].id_compte);
-            printf("Client ID: %d\n", comptes[i].id_client);
-            if (idx_client != -1) {
-                printf("Titulaire: %s %s\n", clients[idx_client].nom, clients[idx_client].prenom);
-            }
-            printf("Solde: %.2f DH\n", comptes[i].solde);
-            printf("Date ouverture: %02d/%02d/%d\n",
-                   comptes[i].date_ouverture.jour,
-                   comptes[i].date_ouverture.mois,
-                   comptes[i].date_ouverture.annee);
-        }
+    // Find the account
+    int idx = chercherCompteParId(rib);
+    if (idx == -1) {
+        ERREUR_RETOUR("Compte inexistant!", Gestion_des_comptes);
     }
+
+    // Verify PIN before showing information
+    printf("\n" COLOR_YELLOW "Verification de securite requise\n" COLOR_RESET);
+    if (!verifier_pin(rib)) {
+        ERREUR_RETOUR("Acces refuse - PIN incorrect!", Gestion_des_comptes);
+    }
+
+    // PIN correct - show account information
+    printf("\n" COLOR_GREEN "=== INFORMATIONS DU COMPTE ===" COLOR_RESET "\n");
+    printf("\n" COLOR_CYAN "RIB:" COLOR_RESET " %09d\n", comptes[idx].id_compte);
+
+    // Find and display client name
+    int idx_client = chercherClientParId(comptes[idx].id_client);
+    if (idx_client != -1) {
+        printf(COLOR_CYAN "Titulaire:" COLOR_RESET " %s %s\n",
+               clients[idx_client].prenom,
+               clients[idx_client].nom);
+        printf(COLOR_CYAN "Client ID:" COLOR_RESET " %d\n", comptes[idx].id_client);
+    }
+
+    printf(COLOR_CYAN "Solde actuel:" COLOR_RESET " " COLOR_GREEN "%.2f DH\n" COLOR_RESET,
+           comptes[idx].solde);
+    printf(COLOR_CYAN "Date d'ouverture:" COLOR_RESET " %02d/%02d/%04d\n",
+           comptes[idx].date_ouverture.jour,
+           comptes[idx].date_ouverture.mois,
+           comptes[idx].date_ouverture.annee);
+
+    printf("\n" COLOR_GREEN "Consultation effectuee avec succes!\n" COLOR_RESET);
 
     pause_ecran();
     Gestion_des_comptes();
@@ -649,15 +793,19 @@ void fermeture_du_compte() {
     char log_msg[256];
     printf("\n" COLOR_CYAN "--- FERMETURE DU COMPTE ---\n" COLOR_RESET);
 
-    printf("RIB du compte (9 chiffres): ");
-    scanf("%d", &id);
+    if (!lire_entier_avec_annulation("RIB du compte (9 chiffres)", &id)) {
+        printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+        pause_ecran();
+        Gestion_des_comptes();
+        return;
+    }
 
     int i = chercherCompteParId(id);
     if (i == -1) {
         ERREUR_RETOUR("Compte introuvable!", Gestion_des_comptes);
     }
 
-    /* Vérifier le PIN avant toute suppression de compte */
+    /* V�rifier le PIN avant toute suppression de compte */
     if (!verifier_pin(id)) {
         printf(COLOR_YELLOW "Fermeture annulee (PIN incorrect).\n" COLOR_RESET);
         pause_ecran();
@@ -697,8 +845,12 @@ void Depot() {
     char log_msg[256];
     printf("\n" COLOR_CYAN "--- DEPOT ---\n" COLOR_RESET);
 
-    printf("RIB du compte: ");
-    scanf("%d", &id);
+    if (!lire_entier_avec_annulation("RIB du compte", &id)) {
+        printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+        pause_ecran();
+        Gestion_des_operation();
+        return;
+    }
 
     int i = chercherCompteParId(id);
     if (i == -1) {
@@ -709,8 +861,12 @@ void Depot() {
         ERREUR_RETOUR("PIN incorrect!", Gestion_des_operation);
     }
 
-    printf("Montant a deposer (DH): ");
-    scanf("%f", &montant);
+    if (!lire_float_avec_annulation("Montant a deposer (DH)", &montant)) {
+        printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+        pause_ecran();
+        Gestion_des_operation();
+        return;
+    }
 
     if (montant <= 0) {
         ERREUR_RETOUR("Montant invalide!", Gestion_des_operation);
@@ -747,8 +903,12 @@ void Retrait() {
     char log_msg[256];
     printf("\n" COLOR_CYAN "--- RETRAIT ---\n" COLOR_RESET);
 
-    printf("RIB du compte: ");
-    scanf("%d", &id);
+    if (!lire_entier_avec_annulation("RIB du compte", &id)) {
+        printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+        pause_ecran();
+        Gestion_des_operation();
+        return;
+    }
 
     int i = chercherCompteParId(id);
     if (i == -1) {
@@ -759,8 +919,14 @@ void Retrait() {
         ERREUR_RETOUR("PIN incorrect!", Gestion_des_operation);
     }
 
-    printf("Montant a retirer (max %.2f DH): ", RETRAIT_MAX);
-    scanf("%f", &montant);
+    printf(COLOR_CYAN "Solde actuel du compte source: %.2f DH\n" COLOR_RESET, comptes[i].solde);
+    printf("Montant a retirer (max %.2f DH)", RETRAIT_MAX);
+    if (!lire_float_avec_annulation("", &montant)) {
+        printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+        pause_ecran();
+        Gestion_des_operation();
+        return;
+    }
 
     if (montant <= 0 || montant > RETRAIT_MAX) {
         ERREUR_RETOUR("Montant invalide ou depasse la limite!", Gestion_des_operation);
@@ -801,8 +967,12 @@ void Virement() {
     char log_msg[256];
     printf("\n" COLOR_CYAN "--- VIREMENT ---\n" COLOR_RESET);
 
-    printf("RIB du compte source: ");
-    scanf("%d", &id_source);
+    if (!lire_entier_avec_annulation("RIB du compte source", &id_source)) {
+        printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+        pause_ecran();
+        Gestion_des_operation();
+        return;
+    }
 
     int i_source = chercherCompteParId(id_source);
     if (i_source == -1) {
@@ -813,8 +983,13 @@ void Virement() {
         ERREUR_RETOUR("PIN incorrect!", Gestion_des_operation);
     }
 
-    printf("RIB du compte destinataire: ");
-    scanf("%d", &id_dest);
+    printf(COLOR_CYAN "Solde actuel du compte source: %.2f DH\n" COLOR_RESET, comptes[i_source].solde);
+    if (!lire_entier_avec_annulation("RIB du compte destinataire", &id_dest)) {
+        printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+        pause_ecran();
+        Gestion_des_operation();
+        return;
+    }
 
     int i_dest = chercherCompteParId(id_dest);
     if (i_dest == -1) {
@@ -825,8 +1000,13 @@ void Virement() {
         ERREUR_RETOUR("Les comptes source et destination doivent etre differents!", Gestion_des_operation);
     }
 
-    printf("Montant a virer (max %.2f DH): ", VIREMENT_MAX);
-    scanf("%f", &montant);
+    printf("Montant a virer (max %.2f DH)", VIREMENT_MAX);
+    if (!lire_float_avec_annulation("", &montant)) {
+        printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+        pause_ecran();
+        Gestion_des_operation();
+        return;
+    }
 
     if (montant <= 0 || montant > VIREMENT_MAX) {
         ERREUR_RETOUR("Montant invalide ou depasse la limite!", Gestion_des_operation);
@@ -855,7 +1035,6 @@ void Virement() {
 
     printf(COLOR_GREEN "Virement reussi!\n" COLOR_RESET);
     printf("Nouveau solde source: %.2f DH\n", comptes[i_source].solde);
-    printf("Nouveau solde destination: %.2f DH\n", comptes[i_dest].solde);
     sprintf(log_msg, "Virement: Source=%09d, Dest=%09d, Montant=%.2f, SoldeSource=%.2f, SoldeDest=%.2f",
             id_source, id_dest, montant, comptes[i_source].solde, comptes[i_dest].solde);
     journaliser_evenement(log_msg);
@@ -867,33 +1046,32 @@ void Virement() {
 void afficher_historique() {
     int id;
     printf("\n" COLOR_CYAN "--- HISTORIQUE DES TRANSACTIONS ---\n" COLOR_RESET);
-    printf("RIB du compte: ");
-    scanf("%d", &id);
-
+    if (!lire_entier_avec_annulation("RIB du compte", &id)) {
+        printf(COLOR_YELLOW "Operation annulee.\n" COLOR_RESET);
+        pause_ecran();
+        Gestion_des_operation();
+        return;
+    }
     /* Vérifier que le compte existe */
     if (chercherCompteParId(id) == -1) {
         ERREUR_RETOUR("Compte introuvable!", Gestion_des_operation);
     }
-
     /* Vérifier le PIN avant d'afficher l'historique */
     if (!verifier_pin(id)) {
         pause_ecran();
         Gestion_des_operation();
         return;
     }
-
     if (nb_transactions == 0) {
         printf(COLOR_YELLOW "Aucune transaction enregistree.\n" COLOR_RESET);
         pause_ecran();
         Gestion_des_operation();
         return;
     }
-
-    printf("\n+------+------------+-------------+---------------+----------------+\n");
-    printf("| %-4s | %-10s | %-11s | %-13s | %-14s |\n",
-           "ID", "RIB", "Type", "Montant (DH)", "Vers RIB");
-    printf("+------+------------+-------------+---------------+----------------+\n");
-
+    printf("\n+---------+------------+-------------+---------------+--------------+\n");
+    printf("| %-7s | %-10s | %-11s | %-13s | %-12s |\n",
+       "ID", "RIB", "Type", "Montant (DH)", "Vers RIB");
+    printf("+---------+------------+-------------+---------------+--------------+\n");
     int count = 0;
     for (int i = 0; i < nb_transactions; i++) {
         if (transactions[i].id_compte == id) {
@@ -903,7 +1081,7 @@ void afficher_historique() {
             } else {
                 strcpy(dest, "-");
             }
-            printf("| %-4d | %09d | %-11s | %13.2f | %-14s |\n",
+            printf("| %-7d | %010d | %-11s | %13.2f | %-12s |\n",
                    transactions[i].id_transaction,
                    transactions[i].id_compte,
                    transactions[i].type,
@@ -912,9 +1090,8 @@ void afficher_historique() {
             count++;
         }
     }
-    printf("+------+------------+-------------+---------------+----------------+\n");
+    printf("+---------+------------+-------------+---------------+--------------+\n");
     printf("Total: %d transaction(s)\n", count);
-
     pause_ecran();
     Gestion_des_operation();
 }
@@ -955,19 +1132,19 @@ void sauvegarder_donnees() {
     f = fopen(DB_PATH "clients.txt", "w");
     if (f != NULL) {
         fprintf(f, "# nb_clients=%d next_client_id=%d\n", nb_clients, next_client_id);
-        fprintf(f, "+------+----------------------+----------------------+----------------------+---------------+\n");
-        fprintf(f, "| %-4s | %-20s | %-20s | %-20s | %-13s |\n",
-                "ID", "Nom", "Prenom", "Profession", "Telephone");
-        fprintf(f, "+------+----------------------+----------------------+----------------------+---------------+\n");
+        fprintf(f, "+------+--------------------------+--------------------------+--------------------------+---------------+\n");
+        fprintf(f, "| %-4s | %-24s | %-24s | %-24s | %-13s |\n",
+                    "ID", "Nom", "Prenom", "Profession", "Telephone");
+        fprintf(f, "+------+--------------------------+--------------------------+--------------------------+---------------+\n");
         for (int i = 0; i < nb_clients; i++) {
-            fprintf(f, "| %-4d | %-20s | %-20s | %-20s | %-13s |\n",
+            fprintf(f, "| %-4d | %-24s | %-24s | %-24s | %-13s |\n",
                     clients[i].id_client,
                     clients[i].nom,
                     clients[i].prenom,
                     clients[i].profession,
                     clients[i].num_tel);
         }
-        fprintf(f, "+------+----------------------+----------------------+----------------------+---------------+\n");
+        fprintf(f, "+------+--------------------------+--------------------------+--------------------------+---------------+\n");
         fclose(f);
     }
 
@@ -1055,6 +1232,12 @@ void charger_donnees() {
                            clients[i].num_tel) != 5) {
                     nb_clients = i;
                     break;
+                }
+                 for(int j = 0; clients[i].nom[j]; j++) {
+                    clients[i].nom[j] = tolower(clients[i].nom[j]);
+                }
+                for(int j = 0; clients[i].prenom[j]; j++) {
+                    clients[i].prenom[j] = tolower(clients[i].prenom[j]);
                 }
             }
         }
@@ -1174,21 +1357,21 @@ void afficher_tous_clients_detaille() {
     }
 
     printf("\n");
-    printf("+------+----------------------+----------------------+----------------------+---------------+----------+\n");
-    printf("| %-4s | %-20s | %-20s | %-20s | %-13s | %-8s |\n",
-           "ID", "Nom", "Prenom", "Profession", "Telephone", "Comptes");
-    printf("+------+----------------------+----------------------+----------------------+---------------+----------+\n");
+    printf("+------+--------------------------+--------------------------+--------------------------+---------------+----------+\n");
+    printf("| %-4s | %-24s | %-24s | %-24s | %-13s | %-8s |\n",
+            "ID", "Nom", "Prenom", "Profession", "Telephone", "Comptes");
+    printf("+------+--------------------------+--------------------------+--------------------------+---------------+----------+\n");
 
     for (int i = 0; i < nb_clients; i++) {
-        printf("| %-4d | %-20s | %-20s | %-20s | %-13s | %-8d |\n",
-               clients[i].id_client,
-               clients[i].nom,
-               clients[i].prenom,
-               clients[i].profession,
-               clients[i].num_tel,
-               compter_comptes_client(clients[i].id_client));
+        printf("| %-4d | %-24s | %-24s | %-24s | %-13s | %-8d |\n",
+                clients[i].id_client,
+                clients[i].nom,
+                clients[i].prenom,
+                clients[i].profession,
+                clients[i].num_tel,
+                compter_comptes_client(clients[i].id_client));
     }
-    printf("+------+----------------------+----------------------+----------------------+---------------+----------+\n");
+    printf("+------+--------------------------+--------------------------+--------------------------+---------------+----------+\n");
     printf("\nTotal: %d clients\n", nb_clients);
 
     pause_ecran();
@@ -1208,10 +1391,10 @@ void afficher_tous_comptes_detaille() {
     }
 
     printf("\n");
-    printf("+------------+----------+----------------------+---------------+------------+------+\n");
-    printf("| %-10s  | %-8s | %-20s | %-13s | %-10s | %-4s |\n",
-           "RIB", "Client", "Nom Client", "Solde (DH)", "Date", "PIN");
-    printf("+------------+----------+----------------------+---------------+------------+------+\n");
+    printf("+------------+----------+------------------------------+---------------+------------+------+\n");
+    printf("| %-10s | %-8s | %-28s | %-13s | %-10s | %-4s |\n",
+            "RIB", "ClientID", "Nom Client", "Solde (DH)", "Date", "PIN");
+    printf("+------------+----------+------------------------------+---------------+------------+------+\n");
 
     for (int i = 0; i < nb_comptes; i++) {
         int idx = chercherClientParId(comptes[i].id_client);
@@ -1229,7 +1412,7 @@ void afficher_tous_comptes_detaille() {
                 comptes[i].date_ouverture.mois,
                 comptes[i].date_ouverture.annee);
 
-        printf("| %010d | %-8d | %-20s | %13.2f | %-10s | %-4s |\n",
+        printf("| %010d | %-8d | %-28s | %13.2f | %-10s | %-4s |\n",
                comptes[i].id_compte,
                comptes[i].id_client,
                nom_complet,
@@ -1237,7 +1420,7 @@ void afficher_tous_comptes_detaille() {
                date,
                comptes[i].pin);
     }
-    printf("+------------+----------+----------------------+---------------+------------+------+\n");
+    printf("+------------+----------+------------------------------+---------------+------------+------+\n");
     printf("\nTotal: %d comptes\n", nb_comptes);
 
     pause_ecran();
@@ -1257,11 +1440,10 @@ void afficher_toutes_transactions_detaille() {
     }
 
     printf("\n");
-    printf("+------+------------+-------------+---------------+----------------+\n");
-    printf("| %-4s | %-10s | %-11s | %-13s | %-14s |\n",
-           "ID", "RIB", "Type", "Montant (DH)", "Vers RIB");
-    printf("+------+------------+-------------+---------------+----------------+\n");
-
+    printf("\n+---------+------------+-------------+---------------+--------------+\n");
+    printf("| %-7s | %-10s | %-11s | %-13s | %-12s |\n",
+            "ID", "RIB", "Type", "Montant (DH)", "Vers RIB");
+    printf("+---------+------------+-------------+---------------+--------------+\n");
     for (int i = 0; i < nb_transactions; i++) {
         char dest[15];
         if (transactions[i].compte_destination != -1) {
@@ -1270,14 +1452,14 @@ void afficher_toutes_transactions_detaille() {
             strcpy(dest, "-");
         }
 
-        printf("| %-4d | %010d | %-11s | %13.2f | %-14s |\n",
+        printf("| %-7d | %010d | %-11s | %13.2f | %-12s |\n",
                transactions[i].id_transaction,
                transactions[i].id_compte,
                transactions[i].type,
                transactions[i].montant,
                dest);
     }
-    printf("+------+------------+-------------+---------------+----------------+\n");
+    printf("+---------+------------+-------------+---------------+--------------+\n");
     printf("\nTotal: %d transactions\n", nb_transactions);
 
     pause_ecran();
@@ -1406,7 +1588,7 @@ void Gestion_des_comptes() {
 
     char *options[] = {
         "Nouveau compte",
-        "Consultation",
+        "Consultation de compte",
         "Fermeture du compte",
         "Retour au menu principal"
     };
